@@ -1,0 +1,85 @@
+﻿stages:
+- name: Build
+  steps:
+  - runScriptConfig:
+      image: pgroot/php:7.3.17
+      shellScript: |-
+        php -v
+        php -m
+        composer config -g cache-dir "~/.cache/composer/cache"
+        composer config -g data-dir "~/.cache/composer"
+        composer install
+        composer dump-autoload
+        ./vendor/bin/phpcs --standard=phpcs.xml
+    when:
+      branch:
+        include:
+        - develop
+        - test*
+        - release
+  - runScriptConfig:
+      image: pgroot/php:7.3.17
+      shellScript: |-
+        php -v
+        php -m
+        composer config -g cache-dir "~/.cache/composer/cache"
+        composer config -g data-dir "~/.cache/composer"
+        composer install
+        composer dump-autoload
+        ./vendor/bin/phpcs --standard=phpcs.xml
+    when:
+      event:
+        include:
+        - tag
+- name: Publish
+  steps:
+  - publishImageConfig:
+      dockerfilePath: ./rancher/Dockerfile
+      buildContext: .
+      tag: 99plas/backend:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
+      pushRemote: true
+      registry: registry.mindertech.net
+    when:
+      branch:
+        include:
+        - develop
+        - test*
+        - release
+  - publishImageConfig:
+      dockerfilePath: ./rancher/Dockerfile
+      buildContext: .
+      tag: 99plas/backend:${CICD_GIT_TAG}
+      pushRemote: true
+      registry: registry.mindertech.net
+    when:
+      event:
+        include:
+        - tag
+- name: Deploy
+  steps:
+  - applyYamlConfig:
+      path: ./rancher/develop.yaml
+    when:
+      branch:
+        include:
+        - develop
+  - applyYamlConfig:
+      path: ./rancher/test.yaml
+    when:
+      branch:
+        include:
+        - test*
+  - applyYamlConfig:
+      path: ./rancher/release.yaml
+    when:
+      branch:
+        include:
+        - release
+  - applyYamlConfig:
+      path: ./rancher/master.yaml
+    when:
+      event:
+        include:
+        - tag
+timeout: 60
+notification: {}
