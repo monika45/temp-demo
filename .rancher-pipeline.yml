@@ -2,7 +2,7 @@
 - name: Build
   steps:
   - runScriptConfig:
-      image: pgroot/php:7.3.17
+      image: pgroot/php:7.2.22
       shellScript: |-
         php -v
         php -m
@@ -18,7 +18,7 @@
         - test*
         - release
   - runScriptConfig:
-      image: pgroot/php:7.3.17
+      image: pgroot/php:7.2.22
       shellScript: |-
         php -v
         php -m
@@ -36,9 +36,9 @@
   - publishImageConfig:
       dockerfilePath: ./rancher/Dockerfile
       buildContext: .
-      tag: 99plas/backend:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
+      tag: temp-demo:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
       pushRemote: true
-      registry: registry.mindertech.net
+      registry: localhost:5000
     when:
       branch:
         include:
@@ -48,9 +48,9 @@
   - publishImageConfig:
       dockerfilePath: ./rancher/Dockerfile
       buildContext: .
-      tag: 99plas/backend:${CICD_GIT_TAG}
+      tag: temp-demo:${CICD_GIT_TAG}
       pushRemote: true
-      registry: registry.mindertech.net
+      registry: localhost:5000
     when:
       event:
         include:
@@ -69,17 +69,5 @@
       branch:
         include:
         - test*
-  - applyYamlConfig:
-      path: ./rancher/release.yaml
-    when:
-      branch:
-        include:
-        - release
-  - applyYamlConfig:
-      path: ./rancher/master.yaml
-    when:
-      event:
-        include:
-        - tag
 timeout: 60
 notification: {}

@@ -1,4 +1,4 @@
-FROM pgroot/php:7.3.17
+FROM pgroot/php:7.2.22
 
 RUN  mkdir -p /app/log/supervisor \
     && touch /var/log/laravel.log \
@@ -35,8 +35,8 @@ RUN chown -R www-data:www-data /var/www \
 RUN ["chmod", "+x", "./rancher/entrypoint.sh"]
 
 EXPOSE 80
-EXPOSE 443
+#EXPOSE 443
 
-LABEL "com.datadoghq.ad.logs"='[{"source": "99Plas_backend", "service": "99plas-api"}]'
+#LABEL "com.datadoghq.ad.logs"='[{"source": "99Plas_backend", "service": "99plas-api"}]'
 
 ENTRYPOINT ["./rancher/entrypoint.sh"]

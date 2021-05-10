@@ -1,17 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nnplas-backend-${CICD_GIT_BRANCH}-service
-  namespace: 99plas-dev
+  name: temp-demo-${CICD_GIT_BRANCH}-service
+  namespace: temp-demo-dev
 spec:
   clusterIP: None
   ports:
-  - name: nnplas-backend-${CICD_GIT_BRANCH}-http
+  - name: temp-demo-${CICD_GIT_BRANCH}-http
     port: 80
     protocol: TCP
     targetPort: 80
   selector:
-    app: nnplas-backend-${CICD_GIT_BRANCH}
+    app: temp-demo-${CICD_GIT_BRANCH}
     branch: ${CICD_GIT_BRANCH}
   sessionAffinity: None
   type: ClusterIP
@@ -23,26 +23,26 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-body-size: 100m
-  name: nnplas-backend-${CICD_GIT_BRANCH}
-  namespace: 99plas-dev
+  name: temp-demo-${CICD_GIT_BRANCH}
+  namespace: temp-demo-dev
 spec:
   rules:
-  - host: 99plas-${CICD_GIT_BRANCH}.mindertech.net
+  - host: mytest-${CICD_GIT_BRANCH}.com
     http:
       paths:
       - backend:
-          serviceName: nnplas-backend-${CICD_GIT_BRANCH}-service
+          serviceName: temp-demo-${CICD_GIT_BRANCH}-service
           servicePort: 80
-        path: /server/api
+        path: /
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nnplas-backend-${CICD_GIT_BRANCH}
-  namespace: 99plas-dev
+  name: temp-demo-${CICD_GIT_BRANCH}
+  namespace: temp-demo-dev
   labels:
-    app: nnplas-backend-${CICD_GIT_BRANCH}
+    app: temp-demo-${CICD_GIT_BRANCH}
     branch: ${CICD_GIT_BRANCH}
 spec:
   replicas: 1
@@ -54,20 +54,18 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: nnplas-backend-${CICD_GIT_BRANCH}
+      app: temp-demo-${CICD_GIT_BRANCH}
       branch: ${CICD_GIT_BRANCH}
   template:
     metadata:
       labels:
-        app: nnplas-backend-${CICD_GIT_BRANCH}
+        app: temp-demo-${CICD_GIT_BRANCH}
         branch: ${CICD_GIT_BRANCH}
     spec:
-      imagePullSecrets:
-      - name: harbor-registry
       containers:
       - env:
         - name: CONTAINER_NAME
-          value: nnplas-backend-${CICD_GIT_BRANCH}
+          value: temp-demo-${CICD_GIT_BRANCH}
         - name: CONTAINER_ROLE
           value: app
         - name: APP_ENV
@@ -221,18 +219,6 @@ spec:
               name: geoip
         - name: ENABLE_QUEUE
           value: "no"
-        - name: APP_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/server
-        - name: LOGISTICS_HOST
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/internal
-        - name: LOGISTICS_AUTH_REDIRECT
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/backoffice/callback
-        - name: LOGISTICS_AUTH_TOKEN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/oauth/binding
-        - name: LOGISTICS_AUTH_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/oauth/authorize
-        - name: LOGISTICS_AUTO_LOGIN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/auto-login
         - name: PUSH_MESSAGE_API
           valueFrom:
             secretKeyRef:
@@ -318,8 +304,8 @@ spec:
             secretKeyRef:
               key: password
               name: logistics-mysql
-        image: ${CICD_REGISTRY}/99plas/backend:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
-        name: nnplas-backend
+        image: localhost:5000/temp-demo:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
+        name: temp-demo
         lifecycle:
           postStart:
             exec:
@@ -354,317 +340,4 @@ spec:
           periodSeconds: 5
           successThreshold: 2
           timeoutSeconds: 2
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-  namespace: 99plas-dev
-  labels:
-    app: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-    branch: ${CICD_GIT_BRANCH}
-spec:
-  replicas: 1
-  progressDeadlineSeconds: 600
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  selector:
-    matchLabels:
-      app: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-      branch: ${CICD_GIT_BRANCH}
-  template:
-    metadata:
-      labels:
-        app: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-        branch: ${CICD_GIT_BRANCH}
-    spec:
-      imagePullSecrets:
-      - name: harbor-registry
-      containers:
-      - env:
-        - name: CONTAINER_NAME
-          value: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-        - name: CONTAINER_ROLE
-          value: queue_schedule
-        - name: APP_ENV
-          value: dev
-        - name: APP_DEBUG
-          value: "true"
-        - name: LOG_LEVEL
-          valueFrom:
-            secretKeyRef:
-              key: level
-              name: log-level
-        - name: ALLOWED_ORIGINS
-          valueFrom:
-            secretKeyRef:
-              key: ALLOWED_ORIGINS
-              name: allowed-origins
-        - name: DB_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name: mysql
-        - name: DB_DATABASE
-          valueFrom:
-            secretKeyRef:
-              key: database
-              name: mysql
-        - name: DB_PORT
-          valueFrom:
-            secretKeyRef:
-              key: port
-              name: mysql
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: user
-              name: mysql
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: mysql
-        - name: REDIS_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name: redis
-        - name: REDIS_DATABASE
-          valueFrom:
-            secretKeyRef:
-              key: database
-              name: redis
-        - name: BUGSNAG_API_KEY
-          valueFrom:
-            secretKeyRef:
-              key: api_key
-              name: bugsnag
-        - name: QINIU_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              key: access_key
-              name: qiniu
-        - name: QINIU_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              key: secret_key
-              name: qiniu
-        - name: QINIU_BUCKET
-          valueFrom:
-            secretKeyRef:
-              key: bucket
-              name: qiniu
-        - name: QINIU_DOMAIN
-          valueFrom:
-            secretKeyRef:
-              key: domain
-              name: qiniu
-        - name: QINIU_PRIVATE_BUCKET
-          valueFrom:
-            secretKeyRef:
-              key: private_bucket
-              name: qiniu
-        - name: QINIU_PRIVATE_DOMAIN
-          valueFrom:
-            secretKeyRef:
-              key: private_domain
-              name: qiniu
-        - name: MSG_DRIVER
-          valueFrom:
-            secretKeyRef:
-              key: driver
-              name: message-service
-        - name: MSG_SERVICE_METHOD
-          valueFrom:
-            secretKeyRef:
-              key: service_method
-              name: message-service
-        - name: MSG_SERVICE_HOST
-          valueFrom:
-            secretKeyRef:
-              key: service_host
-              name: message-service
-        - name: MSG_SERVICE_API
-          valueFrom:
-            secretKeyRef:
-              key: service_api
-              name: message-service
-        - name: MSG_SERVICE_ACCESSKEY
-          valueFrom:
-            secretKeyRef:
-              key: service_accesskey
-              name: message-service
-        - name: MSG_SERVICE_SECRETKEY
-          valueFrom:
-            secretKeyRef:
-              key: service_secretkey
-              name: message-service
-        - name: GEO_IP_COUNTRY_DATA_PATH
-          valueFrom:
-            secretKeyRef:
-              key: country_db_path
-              name: geoip
-        - name: GEO_IP_CITY_DATA_PATH
-          valueFrom:
-            secretKeyRef:
-              key: city_db_path
-              name: geoip
-        - name: GEO_IP_CACHE_ENABLE
-          valueFrom:
-            secretKeyRef:
-              key: cache_enable
-              name: geoip
-        - name: GEO_IP_CACHE_PREFIX
-          valueFrom:
-            secretKeyRef:
-              key: cache_prefix
-              name: geoip
-        - name: GEO_IP_CACHE_TTL
-          valueFrom:
-            secretKeyRef:
-              key: cache_ttl
-              name: geoip
-        - name: GEO_IP_QUERY_MODE
-          valueFrom:
-            secretKeyRef:
-              key: query_mode
-              name: geoip
-        - name: ENABLE_QUEUE
-          value: "yes"
-        - name: APP_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/server
-        - name: LOGISTICS_HOST
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/internal
-        - name: LOGISTICS_AUTH_REDIRECT
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/backoffice/callback
-        - name: LOGISTICS_AUTH_TOKEN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/oauth/binding
-        - name: LOGISTICS_AUTH_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/oauth/authorize
-        - name: LOGISTICS_AUTO_LOGIN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/auto-login
-        - name: PUSH_MESSAGE_API
-          valueFrom:
-            secretKeyRef:
-              key: api
-              name: mobile-msg-service
-        - name: PUSH_MESSAGE_KEY
-          valueFrom:
-            secretKeyRef:
-              key: key
-              name: mobile-msg-service
-        - name: PUSH_MESSAGE_SECRET
-          valueFrom:
-            secretKeyRef:
-              key: secret
-              name: mobile-msg-service
-        - name: PUSH_MESSAGE_PUSH
-          valueFrom:
-            secretKeyRef:
-              key: push
-              name: mobile-msg-service
-        - name: PRN_COLUMN
-          valueFrom:
-            secretKeyRef:
-              key: column
-              name: prn
-        - name: PRN_SPECIAL_KEY
-          valueFrom:
-            secretKeyRef:
-              key: special_key
-              name: prn
-        - name: PRN_DEFAULT_KEY
-          valueFrom:
-            secretKeyRef:
-              key: default_key
-              name: prn
-        - name: BROKER_URI
-          valueFrom:
-            secretKeyRef:
-              key: url
-              name: active-mq
-        - name: ACTIVEMQ_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: username
-              name: active-mq
-        - name: ACTIVEMQ_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: active-mq
-        - name: LOGISTICS_OPEN_QUERY_API
-          valueFrom:
-            secretKeyRef:
-              key: open_query_api
-              name: logistics
-        - name: BACKOFFICE_RULE_LIST
-          valueFrom:
-            secretKeyRef:
-              key: backoffice_rule_list
-              name: nnplas-env
-        - name: LOGISTICS_DB_HOST
-          valueFrom:
-            secretKeyRef:
-              key: host
-              name: logistics-mysql
-        - name: LOGISTICS_DB_DATABASE
-          valueFrom:
-            secretKeyRef:
-              key: database
-              name: logistics-mysql
-        - name: LOGISTICS_DB_PORT
-          valueFrom:
-            secretKeyRef:
-              key: port
-              name: logistics-mysql
-        - name: LOGISTICS_DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: user
-              name: logistics-mysql
-        - name: LOGISTICS_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: password
-              name: logistics-mysql
-        image: ${CICD_REGISTRY}/99plas/backend:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
-        name: nnplas-backend
-        lifecycle:
-          postStart:
-            exec:
-              command:
-              - bash
-              - -c
-              - 'echo "start pod" >> /var/log/laravel.log'
-          preStop:
-            exec:
-              command:
-              - bash
-              - -c
-              - 'service apache2 stop ; service supervisor stop ; service cron stop ; echo "stop apache,supervisor,cron service" >> /var/log/laravel.log'
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /server/api/health
-            port: 80
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 30
-          successThreshold: 1
-          timeoutSeconds: 2
-        readinessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /server/api/health
-            port: 80
-            scheme: HTTP
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          successThreshold: 2
-          timeoutSeconds: 2
+
