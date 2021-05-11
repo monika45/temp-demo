@@ -2,7 +2,7 @@ stages:
 - name: Build
   steps:
   - runScriptConfig:
-      image: pgroot/php:7.2.22
+      image: php:7.2.22
       shellScript: |-
         php -v
         php -m
@@ -18,7 +18,7 @@ stages:
         - test*
         - release
   - runScriptConfig:
-      image: pgroot/php:7.2.22
+      image: php:7.2.22
       shellScript: |-
         php -v
         php -m

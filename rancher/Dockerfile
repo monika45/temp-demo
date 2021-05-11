@@ -1,4 +1,4 @@
-FROM pgroot/php:7.2.22
+FROM php:7.2.22
 
 RUN  mkdir -p /app/log/supervisor \
     && touch /var/log/laravel.log \
