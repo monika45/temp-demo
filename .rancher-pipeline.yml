@@ -45,6 +45,9 @@ stages:
         - develop
         - test*
         - release
+    env:
+      PLUGIN_DEBUG: "true"
+      PLUGIN_INSECURE: "true"
   - publishImageConfig:
       dockerfilePath: ./rancher/Dockerfile
       buildContext: .
@@ -55,6 +58,9 @@ stages:
       event:
         include:
         - tag
+    env:
+      PLUGIN_DEBUG: "true"
+      PLUGIN_INSECURE: "true"
 - name: Deploy
   steps:
   - applyYamlConfig:
