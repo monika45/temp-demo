@@ -37,8 +37,6 @@
       dockerfilePath: ./rancher/Dockerfile
       buildContext: .
       tag: temp-demo:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
-      pushRemote: true
-      registry: localhost:5000
     when:
       branch:
         include:
@@ -49,8 +47,6 @@
       dockerfilePath: ./rancher/Dockerfile
       buildContext: .
       tag: temp-demo:${CICD_GIT_TAG}
-      pushRemote: true
-      registry: localhost:5000
     when:
       event:
         include:
