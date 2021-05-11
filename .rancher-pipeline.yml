@@ -39,28 +39,28 @@ stages:
       tag: temp-demo:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
       pushRemote: true
       registry: 127.0.0.1:34834
+    env:
+      PLUGIN_DEBUG: "true"
+      PLUGIN_INSECURE: "true"
     when:
       branch:
         include:
         - develop
         - test*
         - release
-    env:
-      PLUGIN_DEBUG: "true"
-      PLUGIN_INSECURE: "true"
   - publishImageConfig:
       dockerfilePath: ./rancher/Dockerfile
       buildContext: .
       tag: temp-demo:${CICD_GIT_TAG}
       pushRemote: true
       registry: 127.0.0.1:34834
+    env:
+      PLUGIN_DEBUG: "true"
+      PLUGIN_INSECURE: "true"
     when:
       event:
         include:
         - tag
-    env:
-      PLUGIN_DEBUG: "true"
-      PLUGIN_INSECURE: "true"
 - name: Deploy
   steps:
   - applyYamlConfig:
@@ -76,4 +76,7 @@ stages:
         include:
         - test*
 timeout: 60
+branch:
+  include:
+  - aaa
 notification: {}
