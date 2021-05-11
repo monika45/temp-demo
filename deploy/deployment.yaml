@@ -1,0 +1,41 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: baowu-ui-service
+spec:
+  clusterIP: None
+  ports:
+    - name: baowuui-http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: baowuui
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baowu-ui-service
+  namespace: sanlian-dev
+  labels:
+    app: baowuui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baowuui
+  template:
+    metadata:
+      labels:
+        app: baowuui
+    spec:
+      imagePullSecrets:
+        - name: pipeline-docker-registry
+      containers:
+        - name: baowuui-container
+          image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
+          ports:
+            - containerPort: 80
