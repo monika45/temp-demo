@@ -306,7 +306,7 @@ spec:
             secretKeyRef:
               key: password
               name: logistics-mysql
-        image: ${CICD_IMAGE}:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
+        image: 127.0.0.1:34834/temp-demo:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
         name: temp-demo
         lifecycle:
           postStart:
