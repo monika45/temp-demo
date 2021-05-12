@@ -1,24 +1,22 @@
 stages:
-  - name: Build
-    steps:
-      - runScriptConfig:
-          image: node:slim
-          shellScript: |-
-            yarn install
-            yarn run build
-    when:
-      branch:
-        include:
-          - master
-  - name: Publish
-    steps:
-      - publishImageConfig:
-          dockerfilePath: ./Dockerfile
-          buildContext: .
-          tag: rancher/baowuui:${CICD_EXECUTION_SEQUENCE}
-  - name: Deploy
-    steps:
-      - applyYamlConfig:
-          path: ./deploy/deployment.yaml
+- name: Build
+  steps:
+  - runScriptConfig:
+      image: node:latest
+      shellScript: npm install vue
+  when:
+    branch:
+      include:
+      - master
+- name: Publish
+  steps:
+  - publishImageConfig:
+      dockerfilePath: ./Dockerfile
+      buildContext: .
+      tag: rancher/baowuui:${CICD_EXECUTION_SEQUENCE}
+- name: Deploy
+  steps:
+  - applyYamlConfig:
+      path: ./deploy/deployment.yaml
 timeout: 60
 notification: {}
