@@ -1,18 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nnplas-backend-${CICD_GIT_BRANCH}-service
-  namespace: 99plas-test
+  name: nnplas-backend-service
+  namespace: 99plas-prod
 spec:
   clusterIP: None
   ports:
-  - name: nnplas-backend-${CICD_GIT_BRANCH}-http
+  - name: nnplas-backend-http
     port: 80
     protocol: TCP
     targetPort: 80
   selector:
-    app: nnplas-backend-${CICD_GIT_BRANCH}
-    branch: ${CICD_GIT_BRANCH}
+    app: nnplas-backend
   sessionAffinity: None
   type: ClusterIP
 
@@ -23,15 +22,15 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-body-size: 100m
-  name: nnplas-backend-${CICD_GIT_BRANCH}
-  namespace: 99plas-test
+  name: nnplas-backend
+  namespace: 99plas-prod
 spec:
   rules:
-  - host: 99plas-${CICD_GIT_BRANCH}.mindertech.net
+  - host: www.99plas.com
     http:
       paths:
       - backend:
-          serviceName: nnplas-backend-${CICD_GIT_BRANCH}-service
+          serviceName: nnplas-backend-service
           servicePort: 80
         path: /server/api
 
@@ -39,13 +38,12 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nnplas-backend-${CICD_GIT_BRANCH}
-  namespace: 99plas-test
+  name: nnplas-backend
+  namespace: 99plas-prod
   labels:
-    app: nnplas-backend-${CICD_GIT_BRANCH}
-    branch: ${CICD_GIT_BRANCH}
+    app: nnplas-backend
 spec:
-  replicas: 1
+  replicas: 2
   progressDeadlineSeconds: 600
   strategy:
     type: RollingUpdate
@@ -54,26 +52,38 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: nnplas-backend-${CICD_GIT_BRANCH}
-      branch: ${CICD_GIT_BRANCH}
+      app: nnplas-backend
   template:
     metadata:
       labels:
-        app: nnplas-backend-${CICD_GIT_BRANCH}
-        branch: ${CICD_GIT_BRANCH}
+        app: nnplas-backend
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.type
+                operator: In
+                values:
+                - prod
+      tolerations:
+      - effect: NoSchedule
+        key: dedicated
+        operator: Equal
+        value: prod
       imagePullSecrets:
       - name: harbor-registry
       containers:
       - env:
         - name: CONTAINER_NAME
-          value: nnplas-backend-${CICD_GIT_BRANCH}
+          value: nnplas-backend
         - name: CONTAINER_ROLE
           value: app
         - name: APP_ENV
-          value: test
+          value: production
         - name: APP_DEBUG
-          value: "true"
+          value: "false"
         - name: ENABLE_HTTPS
           valueFrom:
             secretKeyRef:
@@ -219,20 +229,43 @@ spec:
             secretKeyRef:
               key: query_mode
               name: geoip
+        - name: APP_URL
+          valueFrom:
+            secretKeyRef:
+              key: APP_URL
+              name: notify-url
+        - name: LOGISTICS_HOST
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_HOST
+              name: notify-url
+        - name: LOGISTICS_AUTH_REDIRECT
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTH_REDIRECT
+              name: notify-url
+        - name: LOGISTICS_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTH_TOKEN
+              name: notify-url
+        - name: LOGISTICS_AUTH_URL
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTH_URL
+              name: notify-url
+        - name: LOGISTICS_AUTO_LOGIN
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTO_LOGIN
+              name: notify-url
+        - name: X_RELEASES
+          valueFrom:
+            secretKeyRef:
+              key: x_releases
+              name: headers
         - name: ENABLE_QUEUE
           value: "no"
-        - name: APP_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/server
-        - name: LOGISTICS_HOST
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/internal
-        - name: LOGISTICS_AUTH_REDIRECT
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/backoffice/callback
-        - name: LOGISTICS_AUTH_TOKEN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/oauth/binding
-        - name: LOGISTICS_AUTH_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/oauth/authorize
-        - name: LOGISTICS_AUTO_LOGIN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/auto-login
         - name: PUSH_MESSAGE_API
           valueFrom:
             secretKeyRef:
@@ -293,7 +326,7 @@ spec:
             secretKeyRef:
               key: backoffice_rule_list
               name: nnplas-env
-        image: ${CICD_REGISTRY}/99plas/backend:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
+        image: ${CICD_REGISTRY}/99plas/backend:${CICD_GIT_TAG}
         name: nnplas-backend
         lifecycle:
           postStart:
@@ -333,11 +366,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-  namespace: 99plas-test
+  name: nnplas-backend-queue-schedule
+  namespace: 99plas-prod
   labels:
-    app: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-    branch: ${CICD_GIT_BRANCH}
+    app: nnplas-backend-queue-schedule
 spec:
   replicas: 1
   progressDeadlineSeconds: 600
@@ -348,36 +380,43 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-      branch: ${CICD_GIT_BRANCH}
+      app: nnplas-backend-queue-schedule
   template:
     metadata:
       labels:
-        app: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-        branch: ${CICD_GIT_BRANCH}
+        app: nnplas-backend-queue-schedule
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.type
+                operator: In
+                values:
+                - prod
+      tolerations:
+      - effect: NoSchedule
+        key: dedicated
+        operator: Equal
+        value: prod
       imagePullSecrets:
       - name: harbor-registry
       containers:
       - env:
         - name: CONTAINER_NAME
-          value: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
+          value: nnplas-backend-queue-schedule
         - name: CONTAINER_ROLE
           value: queue_schedule
         - name: APP_ENV
-          value: test
+          value: production
         - name: APP_DEBUG
-          value: "true"
+          value: "false"
         - name: LOG_LEVEL
           valueFrom:
             secretKeyRef:
               key: level
               name: log-level
-        - name: ALLOWED_ORIGINS
-          valueFrom:
-            secretKeyRef:
-              key: ALLOWED_ORIGINS
-              name: allowed-origins
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
@@ -508,20 +547,46 @@ spec:
             secretKeyRef:
               key: query_mode
               name: geoip
-        - name: ENABLE_QUEUE
-          value: "yes"
         - name: APP_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/server
+          valueFrom:
+            secretKeyRef:
+              key: APP_URL
+              name: notify-url
         - name: LOGISTICS_HOST
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/internal
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_HOST
+              name: notify-url
         - name: LOGISTICS_AUTH_REDIRECT
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/backoffice/callback
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTH_REDIRECT
+              name: notify-url
         - name: LOGISTICS_AUTH_TOKEN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics_server/api/oauth/binding
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTH_TOKEN
+              name: notify-url
         - name: LOGISTICS_AUTH_URL
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/oauth/authorize
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTH_URL
+              name: notify-url
         - name: LOGISTICS_AUTO_LOGIN
-          value: https://99plas-${CICD_GIT_BRANCH}.mindertech.net/logistics/#/auto-login
+          valueFrom:
+            secretKeyRef:
+              key: LOGISTICS_AUTO_LOGIN
+              name: notify-url
+        - name: X_RELEASES
+          valueFrom:
+            secretKeyRef:
+              key: x_releases
+              name: headers
+        - name: ENABLE_QUEUE
+          valueFrom:
+            secretKeyRef:
+              key: enable_queue
+              name: logistics-enable-queue
         - name: PUSH_MESSAGE_API
           valueFrom:
             secretKeyRef:
@@ -582,7 +647,7 @@ spec:
             secretKeyRef:
               key: backoffice_rule_list
               name: nnplas-env
-        image: ${CICD_REGISTRY}/99plas/backend:${CICD_GIT_BRANCH}-${CICD_EXECUTION_SEQUENCE}
+        image: ${CICD_REGISTRY}/99plas/backend:${CICD_GIT_TAG}
         name: nnplas-backend
         lifecycle:
           postStart:

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nnplas-backend-${CICD_GIT_BRANCH}-service
-  namespace: 99plas-test
+  namespace: 99plas-staging
 spec:
   clusterIP: None
   ports:
@@ -24,7 +24,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/proxy-body-size: 100m
   name: nnplas-backend-${CICD_GIT_BRANCH}
-  namespace: 99plas-test
+  namespace: 99plas-staging
 spec:
   rules:
   - host: 99plas-${CICD_GIT_BRANCH}.mindertech.net
@@ -40,7 +40,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nnplas-backend-${CICD_GIT_BRANCH}
-  namespace: 99plas-test
+  namespace: 99plas-staging
   labels:
     app: nnplas-backend-${CICD_GIT_BRANCH}
     branch: ${CICD_GIT_BRANCH}
@@ -71,9 +71,9 @@ spec:
         - name: CONTAINER_ROLE
           value: app
         - name: APP_ENV
-          value: test
+          value: staging
         - name: APP_DEBUG
-          value: "true"
+          value: "false"
         - name: ENABLE_HTTPS
           valueFrom:
             secretKeyRef:
@@ -334,7 +334,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
-  namespace: 99plas-test
+  namespace: 99plas-staging
   labels:
     app: nnplas-backend-${CICD_GIT_BRANCH}-queue-schedule
     branch: ${CICD_GIT_BRANCH}
@@ -365,9 +365,9 @@ spec:
         - name: CONTAINER_ROLE
           value: queue_schedule
         - name: APP_ENV
-          value: test
+          value: staging
         - name: APP_DEBUG
-          value: "true"
+          value: "false"
         - name: LOG_LEVEL
           valueFrom:
             secretKeyRef:
