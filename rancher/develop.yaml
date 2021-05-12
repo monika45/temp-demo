@@ -4,17 +4,19 @@ metadata:
   name: temp-demo-512-${CICD_GIT_BRANCH}-service
   namespace: example-develop
 spec:
-  clusterIP: None
+  #clusterIP: None
   ports:
   - name: temp-demo-512-${CICD_GIT_BRANCH}-http
     port: 80
     protocol: TCP
     targetPort: 80
+    nodePort: 32143
   selector:
     app: temp-demo-512-${CICD_GIT_BRANCH}
     branch: ${CICD_GIT_BRANCH}
-  sessionAffinity: None
-  type: ClusterIP
+  #sessionAffinity: None
+  #type: ClusterIP
+  type: NodePort
 
 ---
 apiVersion: apps/v1
